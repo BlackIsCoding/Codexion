@@ -63,16 +63,25 @@ void set_dongles(coder_v *coder)
     {
         pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
         pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
-    }
+		//precise_sleep(10);
+		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
+			precise_sleep(coder->arguments->dongle_cooldown);
+	}
     else
     {
         pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
         pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
+		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
+			precise_sleep(coder->arguments->dongle_cooldown);
     }
 }
 
 void release_dongles(coder_v *coder)
 {
-	pthread_mutex_unlock(&(*coder).right_dongle->dongle_mutex);
-	pthread_mutex_unlock(&(*coder).left_dongle->dongle_mutex);
+    coder->right_dongle->realesed_time = get_time_ms();
+    pthread_mutex_unlock(&coder->right_dongle->dongle_mutex);
+    coder->left_dongle->realesed_time = get_time_ms();
+    pthread_mutex_unlock(&coder->left_dongle->dongle_mutex);
 }
+
+

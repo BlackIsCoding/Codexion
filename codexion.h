@@ -7,6 +7,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 
 typedef struct dongle
@@ -41,9 +42,12 @@ typedef struct argument
     char *scheduler;
     coder_v         *coders;
     dongle_v *dongles;
-    pthread_cond_t cond;
     pthread_mutex_t print_mutex;
+    pthread_mutex_t stop_mutex;
+    pthread_t monitor;
     int stop;
+    size_t start;
+    int even;
 } arg_v;
 
 long	    ft_atoi(const char *nptr);
@@ -52,19 +56,7 @@ void*       simulation(void *arg);
 void        setup(arg_v *argument);
 void        set_dongles(coder_v *coder);
 void        release_dongles(coder_v *coder);
-void		print_dici_inti(const char *s, int *i, va_list args, int *ret);
-void		print_str(const char *s, int *i, va_list args, int *ret);
-void		print_hex(const char *s, int *i, va_list args, int *ret);
-void		hexa_lower(int *ret, va_list args);
-void		hexa_upper(int *ret, va_list args);
-void		print_percent_unsigned(const char *s, int *i, int *ret);
-size_t		ft_strlen(const char *s);
-int			ft_putchar_fd(char c, int fd);
-void		ft_putstr_fd(char *s, int fd);
-int			ft_putnbr_fd(int n, int fd);
-void		putnbrr_uns(unsigned int a, int *ret);
-int			ft_printf(const char *s, ...);
-void		print_char(const char *s, int *i, va_list args, int *ret);
-void		print_address(va_list args, int *ret);
+size_t      get_time_ms();
+void        precise_sleep(long time_ms);
 
 # endif

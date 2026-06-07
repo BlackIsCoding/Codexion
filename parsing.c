@@ -134,6 +134,8 @@ int main(int ac, char **av)
         }
         arguments.dongle_cooldown = ft_atoi(av[7]);
         arguments.stop = 0;
+        arguments.even = 0;
+        arguments.start = get_time_ms();
         setup(&arguments);
     }
 }
