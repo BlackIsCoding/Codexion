@@ -136,6 +136,8 @@ int main(int ac, char **av)
         arguments.stop = 0;
         arguments.even = 0;
         arguments.start = get_time_ms();
+        arguments.arrival_counter = 0;
+        pthread_mutex_init(&arguments.fifo_mutex, NULL);
         setup(&arguments);
     }
 }

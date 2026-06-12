@@ -9,12 +9,28 @@
 #include <stdio.h>
 #include <sys/time.h>
 
+typedef struct coder coder_v;
+typedef struct s_waiter
+{
+    coder_v *coder;
+    long    deadline;
+} t_waiter;
+
+
+typedef struct s_heap
+{
+    t_waiter    **waiters;
+    int         size;
+    int         capacity;
+} t_heap;
 
 typedef struct dongle
 {
     pthread_mutex_t dongle_mutex;
     int available;
     long realesed_time;
+    t_heap *heap;
+    pthread_cond_t cond;
 } dongle_v;
 
 typedef struct argument arg_v;
@@ -48,6 +64,8 @@ typedef struct argument
     int stop;
     size_t start;
     int even;
+    long            arrival_counter;
+    pthread_mutex_t fifo_mutex;
 } arg_v;
 
 long	    ft_atoi(const char *nptr);
@@ -58,5 +76,13 @@ void        set_dongles(coder_v *coder);
 void        release_dongles(coder_v *coder);
 size_t      get_time_ms();
 void        precise_sleep(long time_ms);
-
+t_heap  *heap_init(int capacity);
+t_waiter    *new_waiter(coder_v *coder, long deadline);
+void    sift_up(t_heap *heap, int i);
+void    sift_down(t_heap *heap, int i);
+void    heap_insert(t_heap *heap, coder_v *coder, long deadline);
+t_waiter    *heap_extract_min(t_heap *heap);
+void    heap_free(t_heap *heap);
+void    register_in_heaps(coder_v *coder);
+void    wake_next(dongle_v *dongle);
 # endif

@@ -57,30 +57,202 @@ int	ft_strcmp(const char *s1, const char *s2)
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
+// void set_dongles(coder_v *coder)
+// {
+//     if (coder->id % 2 == 0)
+//     {
+//         pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
+//         pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
+// 		//precise_sleep(10);
+// 		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
+// 			precise_sleep(coder->arguments->dongle_cooldown);
+// 	}
+//     else
+//     {
+//         pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
+//         pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
+// 		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
+// 			precise_sleep(coder->arguments->dongle_cooldown);
+//     }
+// }
+
+// void set_dongles(coder_v *coder)
+// {
+//     dongle_v    *first;
+//     dongle_v    *second;
+//     t_waiter    *w;
+
+//     if (coder->id % 2 == 0)
+//     {
+//         first = coder->right_dongle;
+//         second = coder->left_dongle;
+//     }
+//     else
+//     {
+//         first = coder->left_dongle;
+//         second = coder->right_dongle;
+//     }
+
+//     pthread_mutex_lock(&first->dongle_mutex);
+
+//     while (!first->available
+//         || first->heap->size == 0
+//         || first->heap->waiters[0]->coder != coder)
+//     {
+//         pthread_cond_wait(&first->cond, &first->dongle_mutex);
+//     }
+
+//     w = heap_extract_min(first->heap);
+//     free(w);
+//     first->available = 0;
+
+//     pthread_mutex_unlock(&first->dongle_mutex);
+
+
+//     pthread_mutex_lock(&second->dongle_mutex);
+
+//     while (!second->available
+//         || second->heap->size == 0
+//         || second->heap->waiters[0]->coder != coder)
+//     {
+//         pthread_cond_wait(&second->cond, &second->dongle_mutex);
+//     }
+
+//     w = heap_extract_min(second->heap);
+//     free(w);
+//     second->available = 0;
+
+//     pthread_mutex_unlock(&second->dongle_mutex);
+// }
+
+// void set_dongles(coder_v *coder)
+// {
+//     dongle_v    *first;
+//     dongle_v    *second;
+//     t_waiter    *w;
+
+//     if (coder->id % 2 == 0)
+//     {
+//         first = coder->right_dongle;
+//         second = coder->left_dongle;
+//     }
+//     else
+//     {
+//         first = coder->left_dongle;
+//         second = coder->right_dongle;
+//     }
+
+//     while (1)
+//     {
+//         pthread_mutex_lock(&first->dongle_mutex);
+//         pthread_mutex_lock(&second->dongle_mutex);
+
+//         // Check if BOTH dongles are available AND this coder is at the top of BOTH heaps
+//         if (first->available && second->available &&
+//             first->heap->size > 0 && first->heap->waiters[0]->coder == coder &&
+//             second->heap->size > 0 && second->heap->waiters[0]->coder == coder)
+//         {
+//             // Successfully matching all criteria: consume both resources safely
+//             w = heap_extract_min(first->heap);
+//             free(w);
+//             first->available = 0;
+
+//             w = heap_extract_min(second->heap);
+//             free(w);
+//             second->available = 0;
+
+//             pthread_mutex_unlock(&second->dongle_mutex);
+//             pthread_mutex_unlock(&first->dongle_mutex);
+//             break; // Exit the acquisition loop
+//         }
+
+//         // If we can't get both, unlock everything and wait on the first available condition
+//         pthread_mutex_unlock(&second->dongle_mutex);
+        
+//         // This will atomatically release 'first->dongle_mutex' and sleep until signaled
+//         pthread_cond_wait(&first->cond, &first->dongle_mutex);
+//         pthread_mutex_unlock(&first->dongle_mutex);
+//     }
+// }
+
+// void release_dongles(coder_v *coder)
+// {
+//     coder->right_dongle->realesed_time = get_time_ms();
+//     pthread_mutex_unlock(&coder->right_dongle->dongle_mutex);
+//     coder->left_dongle->realesed_time = get_time_ms();
+//     pthread_mutex_unlock(&coder->left_dongle->dongle_mutex);
+// }
+
 void set_dongles(coder_v *coder)
 {
+    dongle_v    *first;
+    dongle_v    *second;
+    t_waiter    *w;
+    long        elapsed;
+
     if (coder->id % 2 == 0)
     {
-        pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
-        pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
-		//precise_sleep(10);
-		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
-			precise_sleep(coder->arguments->dongle_cooldown);
-	}
+        first = coder->right_dongle;
+        second = coder->left_dongle;
+    }
     else
     {
-        pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
-        pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
-		if (coder->left_dongle->realesed_time || coder->right_dongle->realesed_time)
-			precise_sleep(coder->arguments->dongle_cooldown);
+        first = coder->left_dongle;
+        second = coder->right_dongle;
     }
+
+    pthread_mutex_lock(&first->dongle_mutex);
+    while (!first->available
+        || first->heap->size == 0
+        || first->heap->waiters[0]->coder != coder)
+        pthread_cond_wait(&first->cond, &first->dongle_mutex);
+    w = heap_extract_min(first->heap);
+    free(w);
+    first->available = 0;
+    if (first->realesed_time != 0)
+    {
+        elapsed = (long)get_time_ms() - first->realesed_time;
+        if (elapsed < coder->arguments->dongle_cooldown)
+            precise_sleep(coder->arguments->dongle_cooldown - elapsed);
+    }
+    pthread_mutex_unlock(&first->dongle_mutex);
+
+    pthread_mutex_lock(&second->dongle_mutex);
+    while (!second->available
+        || second->heap->size == 0
+        || second->heap->waiters[0]->coder != coder)
+        pthread_cond_wait(&second->cond, &second->dongle_mutex);
+    w = heap_extract_min(second->heap);
+    free(w);
+    second->available = 0;
+    if (second->realesed_time != 0)
+    {
+        elapsed = (long)get_time_ms() - second->realesed_time;
+        if (elapsed < coder->arguments->dongle_cooldown)
+            precise_sleep(coder->arguments->dongle_cooldown - elapsed);
+    }
+    pthread_mutex_unlock(&second->dongle_mutex);
 }
 
 void release_dongles(coder_v *coder)
 {
+    pthread_mutex_lock(&coder->right_dongle->dongle_mutex);
+
+    coder->right_dongle->available = 1;
     coder->right_dongle->realesed_time = get_time_ms();
+
+    wake_next(coder->right_dongle);
+
     pthread_mutex_unlock(&coder->right_dongle->dongle_mutex);
+
+
+    pthread_mutex_lock(&coder->left_dongle->dongle_mutex);
+
+    coder->left_dongle->available = 1;
     coder->left_dongle->realesed_time = get_time_ms();
+
+    wake_next(coder->left_dongle);
+
     pthread_mutex_unlock(&coder->left_dongle->dongle_mutex);
 }
 
