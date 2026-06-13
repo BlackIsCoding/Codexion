@@ -1,3 +1,0 @@
-1 - fix the prints and make sure all work
-2 - add burnout
-3 - scheduler

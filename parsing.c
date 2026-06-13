@@ -2,8 +2,6 @@
 #include <unistd.h>
 #include "codexion.h"
 
-
-
 void print_string(char *str)
 {
     while (*str)
@@ -116,22 +114,11 @@ int main(int ac, char **av)
     else
     {
         arguments.number_of_coders = ft_atoi(av[1]);
-
-        if (arguments.number_of_coders < 2)
-        {
-            print_string("THERE MUST BE AT LEAST 2 CODERS\n");
-            exit(1);
-        }
         arguments.time_to_burnout = ft_atoi(av[2]);
         arguments.time_to_compile = ft_atoi(av[3]);
         arguments.time_to_debug = ft_atoi(av[4]);
         arguments.time_to_refactor = ft_atoi(av[5]);
         arguments.number_of_compiles_required = ft_atoi(av[6]);
-        if (arguments.number_of_compiles_required == 0)
-        {
-            print_string("NUMBER OF COMPILATIONS MUST BE >0\n");
-            exit(1);
-        }
         arguments.dongle_cooldown = ft_atoi(av[7]);
         arguments.stop = 0;
         arguments.even = 0;
